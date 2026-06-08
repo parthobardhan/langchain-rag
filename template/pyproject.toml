@@ -1,0 +1,41 @@
+[project]
+name = "{{package_name}}"
+version = "0.1.0"
+description = "LangChain RAG application"
+readme = "README.md"
+requires-python = ">=3.11,<3.14"
+dependencies = [
+    "langchain>=0.3.0",
+    "langchain-core>=0.3.0",
+    "langchain-openai>=0.2.0",
+    "langchain-voyageai>=0.2.0; python_version < '3.13'",
+    "langchain-voyageai>=0.1.3; python_version >= '3.13'",
+    "langchain-mongodb>=0.7.0",
+    "langchain-text-splitters>=0.3.0",
+    "pymongo>=4.10.0",
+    "python-dotenv>=1.0.0",
+    "pydantic-settings>=2.0.0",
+    "typer>=0.15.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0.0",
+    "pytest-mock>=3.14.0",
+]
+
+[project.scripts]
+{{package_name}} = "{{package_name}}.cli:app"
+
+[build-system]
+requires = ["setuptools>=75.0.0"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+markers = [
+    "integration: tests that require MongoDB Atlas and API keys",
+]

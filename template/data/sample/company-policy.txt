@@ -1,0 +1,5 @@
+Acme Corp Remote Work Policy
+
+All employees may work remotely up to three days per week.
+Core collaboration hours are 10:00 AM to 3:00 PM in the employee's local timezone.
+Employees must use the company VPN when accessing internal systems from home.
