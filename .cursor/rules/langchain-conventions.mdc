@@ -1,0 +1,48 @@
+---
+description: LangChain LCEL conventions for RAG applications
+alwaysApply: true
+---
+
+# LangChain Conventions
+
+## Never use in new code
+
+### Broken imports (removed in v0.3+)
+- `from langchain.chains import LLMChain`
+- `from langchain.chat_models import ChatOpenAI`
+- `from langchain.memory import ConversationBufferMemory`
+
+### Deprecated shim — do not use for new code
+- `from langchain_classic.chains import LLMChain`
+- `from langchain_classic.memory import ConversationBufferMemory`
+- `chain.run(...)` — deprecated method
+- `initialize_agent(...)` — deprecated
+
+## Always use these
+
+### Correct imports
+- `from langchain_openai import ChatOpenAI`
+- `from langchain_core.prompts import ChatPromptTemplate`
+- `from langchain_core.output_parsers import StrOutputParser`
+- `from langchain_core.runnables import RunnablePassthrough, RunnableWithMessageHistory`
+- `from langchain_mongodb import MongoDBAtlasVectorSearch`
+- `from langchain_voyageai import VoyageAIEmbeddings`
+
+### LCEL — required for all new chains
+
+```python
+chain = prompt | llm | StrOutputParser()
+result = chain.invoke({"input": "..."})
+```
+
+### RAG pattern
+
+```python
+chain = (
+    {"context": retriever | format_docs, "question": RunnablePassthrough()}
+    | prompt | llm | StrOutputParser()
+)
+```
+
+### Memory — modern pattern
+Use `RunnableWithMessageHistory`, never `ConversationBufferMemory`.

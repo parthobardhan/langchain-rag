@@ -1,0 +1,8 @@
+{
+  "name": "langchain-rag",
+  "description": "Scaffold and conventions for building LangChain RAG apps with MongoDB Vector Search, Voyage AI, and OpenAI",
+  "version": "0.1.0",
+  "author": {
+    "name": "Your Organization"
+  }
+}
