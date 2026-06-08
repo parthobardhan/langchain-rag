@@ -29,11 +29,11 @@ def get_mongo_collection(settings: Settings):
 
 
 def delete_chunks_by_source(sources: list[str], settings: Settings) -> int:
-    """Remove stored chunks whose metadata.source is in sources. Returns delete count."""
+    """Remove stored chunks whose source is in sources. Returns delete count."""
     if not sources:
         return 0
     collection = get_mongo_collection(settings)
-    result = collection.delete_many({"metadata.source": {"$in": sources}})
+    result = collection.delete_many({"source": {"$in": sources}})
     return result.deleted_count
 
 
