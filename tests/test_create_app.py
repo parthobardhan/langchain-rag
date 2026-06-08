@@ -49,6 +49,7 @@ def test_bootstrap_hyphenated_app_name_uses_valid_project_name(tmp_path: Path):
     pyproject = (dest / "pyproject.toml").read_text(encoding="utf-8")
     assert 'name = "acme_docs_rag"' in pyproject
     assert 'name = "acme-docs-rag"' not in pyproject
+    assert '"acme_docs_rag" = "acme_docs_rag.cli:app"' in pyproject
     assert (dest / "src" / "acme_docs_rag" / "cli.py").is_file()
 
 
