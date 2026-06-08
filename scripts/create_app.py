@@ -29,6 +29,38 @@ def validate_package_name(package_name: str) -> str:
     return package_name
 
 
+def validate_app_name(app_name: str) -> str:
+    """Ensure app_name is a single safe directory name (no path components)."""
+    name = app_name.strip()
+    if not name:
+        raise ValueError("App name cannot be empty")
+    if name in {".", ".."}:
+        raise ValueError(
+            f"Invalid app name {app_name!r}: must be a single directory name"
+        )
+    path = Path(name)
+    if path.name != name or ".." in path.parts or len(path.parts) != 1:
+        raise ValueError(
+            f"Invalid app name {app_name!r}: must be a single directory name "
+            "(no slashes or parent references)"
+        )
+    return name
+
+
+def resolve_app_dest(output_parent: Path, app_name: str) -> Path:
+    """Return the resolved destination path, ensuring it stays under output_parent."""
+    safe_name = validate_app_name(app_name)
+    parent = output_parent.resolve()
+    dest = (parent / safe_name).resolve()
+    try:
+        dest.relative_to(parent)
+    except ValueError as exc:
+        raise ValueError(
+            f"Invalid app name {app_name!r}: destination {dest} is outside {parent}"
+        ) from exc
+    return dest
+
+
 def package_name_from_app_name(app_name: str) -> str:
     """Convert app directory name to a valid Python package name."""
     name = re.sub(r"[^a-zA-Z0-9]+", "_", app_name.strip()).strip("_").lower()
@@ -73,14 +105,18 @@ def create_app(
 ) -> Path:
     """Bootstrap a new RAG app. Returns the destination directory."""
     validate_package_name(package_name)
-    dest = output_parent / app_name
+    dest = resolve_app_dest(output_parent, app_name)
     if dest.exists():
         raise FileExistsError(f"destination already exists: {dest}")
 
     dest.mkdir(parents=True)
-    copy_tree(TEMPLATE_DIR, dest, package_name, app_name)
-    if copy_cursor:
-        copy_cursor_guidance(dest)
+    try:
+        copy_tree(TEMPLATE_DIR, dest, package_name, app_name)
+        if copy_cursor:
+            copy_cursor_guidance(dest)
+    except Exception:
+        shutil.rmtree(dest, ignore_errors=True)
+        raise
     return dest
 
 
@@ -125,21 +161,23 @@ def main() -> int:
         return 1
 
     try:
+        app_name = validate_app_name(args.app_name)
         package_name = validate_package_name(
-            args.package_name or package_name_from_app_name(args.app_name)
+            args.package_name or package_name_from_app_name(app_name)
         )
     except ValueError as exc:
         print(f"Error: {exc}", file=sys.stderr)
         return 1
 
     output_parent = args.output_dir or SCAFFOLD_ROOT.parent
+    dest_path = resolve_app_dest(output_parent, app_name)
 
-    print(f"Creating RAG app at {output_parent / args.app_name}")
+    print(f"Creating RAG app at {dest_path}")
     print(f"  Package name: {package_name}")
 
     try:
-        dest = create_app(args.app_name, package_name, output_parent)
-    except FileExistsError as exc:
+        dest = create_app(app_name, package_name, output_parent)
+    except (FileExistsError, ValueError) as exc:
         print(f"Error: {exc}", file=sys.stderr)
         return 1
 
@@ -152,12 +190,10 @@ Done! Next steps:
   pip install -e ".[dev]"
   cp .env.example .env    # add MONGODB_URI, VOYAGE_API_KEY, OPENAI_API_KEY
 
-  pytest tests/unit
-  python scripts/create_vector_index.py
   python -m {package_name}.cli ingest data/sample/
   python -m {package_name}.cli query "What is in the sample docs?"
 
-See README.md and docs/engineer-guide.md for the full workflow.
+See README.md for the full workflow.
 """
     )
     return 0
