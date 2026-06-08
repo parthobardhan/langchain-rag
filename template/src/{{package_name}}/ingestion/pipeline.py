@@ -5,13 +5,13 @@ from pathlib import Path
 from langchain_core.documents import Document
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 
-from {{package_name}}.config import Settings, get_settings
-from {{package_name}}.ingestion.loader import load_documents
-from {{package_name}}.retrieval.vector_store import (
+from ..config import Settings, get_settings
+from ..retrieval.vector_store import (
     delete_chunks_by_source,
     get_embeddings,
     get_vector_store,
 )
+from .loader import load_documents
 
 
 def split_documents(

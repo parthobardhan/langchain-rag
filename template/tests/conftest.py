@@ -1,10 +1,13 @@
 """Shared pytest fixtures."""
 
+import importlib
+
 import pytest
 from langchain_core.documents import Document
 from langchain_core.runnables import RunnableLambda
 
-from {{package_name}}.config import Settings
+PACKAGE_NAME = "{{package_name}}"
+Settings = importlib.import_module(f"{PACKAGE_NAME}.config").Settings
 
 
 @pytest.fixture

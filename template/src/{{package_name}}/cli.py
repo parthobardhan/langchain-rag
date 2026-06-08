@@ -5,10 +5,10 @@ from pathlib import Path
 import typer
 from dotenv import load_dotenv
 
-from {{package_name}}.chains.rag import build_rag_chain
-from {{package_name}}.config import get_settings
-from {{package_name}}.ingestion.pipeline import ingest_documents
-from {{package_name}}.retrieval.vector_store import get_retriever
+from .chains.rag import build_rag_chain
+from .config import get_settings
+from .ingestion.pipeline import ingest_documents
+from .retrieval.vector_store import get_retriever
 
 load_dotenv()
 

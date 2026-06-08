@@ -1,13 +1,21 @@
 """End-to-end integration tests against MongoDB Atlas and live APIs."""
 
+import importlib
 import os
 
 import pytest
 
-from {{package_name}}.chains.rag import build_rag_chain
-from {{package_name}}.config import Settings
-from {{package_name}}.ingestion.pipeline import ingest_documents
-from {{package_name}}.retrieval.vector_store import delete_chunks_by_source, get_retriever
+PACKAGE_NAME = "{{package_name}}"
+rag = importlib.import_module(f"{PACKAGE_NAME}.chains.rag")
+config = importlib.import_module(f"{PACKAGE_NAME}.config")
+pipeline = importlib.import_module(f"{PACKAGE_NAME}.ingestion.pipeline")
+vector_store = importlib.import_module(f"{PACKAGE_NAME}.retrieval.vector_store")
+
+build_rag_chain = rag.build_rag_chain
+Settings = config.Settings
+ingest_documents = pipeline.ingest_documents
+delete_chunks_by_source = vector_store.delete_chunks_by_source
+get_retriever = vector_store.get_retriever
 
 pytestmark = pytest.mark.integration
 

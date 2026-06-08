@@ -9,7 +9,7 @@ from langchain_mongodb import MongoDBAtlasVectorSearch
 from langchain_voyageai import VoyageAIEmbeddings
 from pymongo import MongoClient
 
-from {{package_name}}.config import Settings, get_settings
+from ..config import Settings, get_settings
 
 
 @lru_cache(maxsize=4)

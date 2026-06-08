@@ -1,13 +1,18 @@
 """Unit tests for document loading and splitting."""
 
+import importlib
 from pathlib import Path
 from unittest.mock import patch
 
 import pytest
 from langchain_core.documents import Document
 
-from {{package_name}}.ingestion.loader import load_documents
-from {{package_name}}.ingestion.pipeline import ingest_documents, split_documents
+PACKAGE_NAME = "{{package_name}}"
+loader = importlib.import_module(f"{PACKAGE_NAME}.ingestion.loader")
+pipeline = importlib.import_module(f"{PACKAGE_NAME}.ingestion.pipeline")
+load_documents = loader.load_documents
+ingest_documents = pipeline.ingest_documents
+split_documents = pipeline.split_documents
 
 
 def test_load_documents_from_file(tmp_path: Path):

@@ -1,10 +1,14 @@
 """Unit tests for the RAG chain (no external API calls)."""
 
+import importlib
 from unittest.mock import patch
 
 from langchain_core.language_models.fake_chat_models import FakeListChatModel
 
-from {{package_name}}.chains.rag import _format_docs, build_rag_chain
+PACKAGE_NAME = "{{package_name}}"
+rag = importlib.import_module(f"{PACKAGE_NAME}.chains.rag")
+_format_docs = rag._format_docs
+build_rag_chain = rag.build_rag_chain
 
 
 def test_format_docs_joins_page_content(sample_documents):
