@@ -7,7 +7,7 @@ from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.runnables import Runnable, RunnablePassthrough
 from langchain_openai import ChatOpenAI
 
-from {{package_name}}.config import Settings, get_settings
+from ..config import Settings, get_settings
 
 
 def _format_docs(docs: list[Any]) -> str:
