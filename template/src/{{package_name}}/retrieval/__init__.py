@@ -11,7 +11,7 @@ __all__ = [
 
 
 def __getattr__(name: str):
-    from {{package_name}}.retrieval import vector_store
+    from . import vector_store
 
     if name in __all__:
         return getattr(vector_store, name)

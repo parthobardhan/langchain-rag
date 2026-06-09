@@ -9,7 +9,7 @@ from langchain_mongodb import MongoDBAtlasVectorSearch
 from langchain_voyageai import VoyageAIEmbeddings
 from pymongo import MongoClient
 
-from {{package_name}}.config import Settings, get_settings
+from ..config import Settings, get_settings
 
 
 @lru_cache(maxsize=4)
@@ -29,11 +29,11 @@ def get_mongo_collection(settings: Settings):
 
 
 def delete_chunks_by_source(sources: list[str], settings: Settings) -> int:
-    """Remove stored chunks whose source is in sources. Returns delete count."""
+    """Remove stored chunks whose metadata.source is in sources. Returns delete count."""
     if not sources:
         return 0
     collection = get_mongo_collection(settings)
-    result = collection.delete_many({"source": {"$in": sources}})
+    result = collection.delete_many({"metadata.source": {"$in": sources}})
     return result.deleted_count
 
 

@@ -25,7 +25,7 @@ dev = [
 ]
 
 [project.scripts]
-{{package_name}} = "{{package_name}}.cli:app"
+"{{package_name}}" = "{{package_name}}.cli:app"
 
 [build-system]
 requires = ["setuptools>=75.0.0"]
