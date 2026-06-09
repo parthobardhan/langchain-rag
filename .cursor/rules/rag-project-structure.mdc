@@ -1,0 +1,33 @@
+---
+description: RAG project layout — where to put ingestion, retrieval, and chains
+globs: src/**/*.py
+alwaysApply: false
+---
+
+# RAG Project Structure
+
+## Module responsibilities
+
+| Module | Responsibility | Do not put here |
+|--------|----------------|-----------------|
+| `config.py` | Env vars, settings | Business logic |
+| `ingestion/loader.py` | Load raw files → Documents | Embedding or DB calls |
+| `ingestion/pipeline.py` | Split → embed → store | Query/retrieval logic |
+| `retrieval/vector_store.py` | MongoDB + Voyage setup | Prompt templates |
+| `chains/rag.py` | LCEL RAG chain only | File I/O |
+| `cli.py` | Typer commands | Core logic (delegate to modules) |
+
+## Extension guidelines
+
+- Add new document sources in `ingestion/loader.py`
+- Change chunking in `ingestion/pipeline.py` or `config.py`
+- Add retriever filters in `retrieval/vector_store.py`
+- Change prompts in `chains/rag.py`
+- Write unit tests in `tests/unit/` before implementation
+
+## Approved stack
+
+- Embeddings: `VoyageAIEmbeddings` (manual, client-side)
+- Vector store: `MongoDBAtlasVectorSearch`
+- LLM: `ChatOpenAI`
+- Tests: `pytest` with `@pytest.mark.integration` for Atlas tests
