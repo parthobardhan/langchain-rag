@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Bootstrap a new RAG app from the langchain-rag template."""
+"""Bootstrap a new RAG app from the langchain-rag-scaffold template."""
 
 from __future__ import annotations
 
@@ -113,27 +113,32 @@ def create_app(
     try:
         copy_tree(TEMPLATE_DIR, dest, package_name, app_name)
         if copy_cursor:
-            copy_cursor_guidance(dest)
+            copy_cursor_guidance(dest, package_name, app_name)
     except Exception:
         shutil.rmtree(dest, ignore_errors=True)
         raise
     return dest
 
 
-def copy_cursor_guidance(dst: Path) -> None:
+def copy_cursor_guidance(dst: Path, package_name: str, app_name: str) -> None:
     """Copy Cursor rules, skills, and commands into the generated app."""
-    if not CURSOR_DIR.exists():
-        return
-    dest_cursor = dst / ".cursor"
-    if dest_cursor.exists():
-        shutil.rmtree(dest_cursor)
-    shutil.copytree(CURSOR_DIR, dest_cursor)
-
-    if PLUGIN_DIR.exists():
-        dest_plugin = dst / ".cursor-plugin"
-        if dest_plugin.exists():
-            shutil.rmtree(dest_plugin)
-        shutil.copytree(PLUGIN_DIR, dest_plugin)
+    for src_dir, dest_name in ((CURSOR_DIR, ".cursor"), (PLUGIN_DIR, ".cursor-plugin")):
+        if not src_dir.exists():
+            continue
+        dest_dir = dst / dest_name
+        if dest_dir.exists():
+            shutil.rmtree(dest_dir)
+        shutil.copytree(src_dir, dest_dir)
+        for path in dest_dir.rglob("*"):
+            if not path.is_file():
+                continue
+            try:
+                text = path.read_text(encoding="utf-8")
+            except UnicodeDecodeError:
+                continue
+            updated = replace_placeholders(text, package_name, app_name)
+            if updated != text:
+                path.write_text(updated, encoding="utf-8")
 
 
 def main() -> int:
@@ -192,6 +197,8 @@ Done! Next steps:
 
   python -m {package_name}.cli ingest data/sample/
   python -m {package_name}.cli query "What is in the sample docs?"
+
+  Cursor tip: open {dest} as its own workspace root (File → Open Folder).
 
 See README.md for the full workflow.
 """
