@@ -1,5 +1,7 @@
 # Engineer Guide: {{app_name}}
 
+**Cursor tip:** Open this app directory as its own workspace root (File → Open Folder). This keeps agent context limited to this app and approved docs.
+
 ## Quick start
 
 ```bash

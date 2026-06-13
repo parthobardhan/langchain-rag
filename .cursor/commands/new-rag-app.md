@@ -1,6 +1,6 @@
 # New RAG App
 
-Bootstrap a new LangChain RAG application from the langchain-rag scaffold.
+Bootstrap a new LangChain RAG application from the langchain-rag-scaffold.
 
 ## Steps
 

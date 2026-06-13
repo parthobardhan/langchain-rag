@@ -1,6 +1,6 @@
 ---
 name: build-rag-app
-description: Guide engineers through extending a LangChain RAG app generated from the langchain-rag scaffold. Use when adding loaders, changing prompts, configuring MongoDB Vector Search, writing tests, or implementing ingestion/retrieval features.
+description: Guide engineers through extending a LangChain RAG app generated from the langchain-rag-scaffold. Use when adding loaders, changing prompts, configuring MongoDB Vector Search, writing tests, or implementing ingestion/retrieval features.
 ---
 
 # Build RAG App
@@ -9,7 +9,8 @@ description: Guide engineers through extending a LangChain RAG app generated fro
 
 1. Read `README.md` and `.env.example` in the generated app
 2. Identify which module owns the change (see `.cursor/rules/rag-project-structure.mdc`)
-3. Write or update a unit test in `tests/unit/` first
+3. If using an unfamiliar LangChain API, confirm its current signature via the `docs-langchain` MCP server
+4. Write or update a unit test in `tests/unit/` first
 
 ## Common tasks
 
@@ -54,6 +55,7 @@ python -m <package>.cli ingest path/to/docs/
 
 ## References
 
+- [LangChain docs MCP](https://docs.langchain.com/use-these-docs) — `docs-langchain` server in `.cursor/mcp.json`
 - [MongoDB Vector Search](https://www.mongodb.com/docs/vector-search/)
 - [LangChain MongoDB integration](https://www.mongodb.com/docs/atlas/ai-integrations/langchain/)
 - [Voyage AI models](https://www.mongodb.com/docs/voyageai/)
