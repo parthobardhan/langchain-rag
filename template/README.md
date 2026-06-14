@@ -1,6 +1,8 @@
 # {{app_name}}
 
-LangChain RAG application generated from the [langchain-rag](https://github.com/your-org/langchain-rag) scaffold.
+LangChain RAG application generated from the [langchain-rag-scaffold](https://github.com/your-org/langchain-rag-scaffold).
+
+Open this directory as its own Cursor workspace root to keep agent context within this app.
 
 ## Quick start
 

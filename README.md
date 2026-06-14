@@ -1,4 +1,4 @@
-# langchain-rag
+# langchain-rag-scaffold
 
 Scaffold for building **CLI-based RAG applications** with approved org technologies:
 
@@ -25,7 +25,7 @@ The generated app includes:
 - `ingest` and `query` CLI commands
 - Unit tests (mocked, no live API keys — install deps with `pip install -e ".[dev]"`)
 - Integration test stubs (Atlas + API keys)
-- Cursor rules, skills, and commands copied from this repo
+- Cursor rules, skills, commands, hooks, MCP config, and Bugbot checklist copied from this repo
 
 ## Generated app setup
 
@@ -52,15 +52,30 @@ python -m acme_docs_rag.cli query "How many remote days are allowed?"
 |---------|----------|---------|
 | Rules | `.cursor/rules/` | LangChain conventions + project layout |
 | Skill | `.cursor/skills/build-rag-app/` | Agent workflow for extending apps |
-| Command | `.cursor/commands/new-rag-app.md` | Bootstrap a new app |
+| Commands | `.cursor/commands/` | `/new-rag-app` bootstrap; `first-contribution` for scaffold PRs |
+| Hooks | `.cursor/hooks.json` | Auto-run conventions checker after agent edits |
+| MCP | `.cursor/mcp.json` | Bundled LangChain docs server (`docs-langchain`) |
+| Bugbot | `.cursor/BUGBOT.md` | PR review checklist for LangChain conventions |
 | Plugin | `.cursor-plugin/plugin.json` | Optional org marketplace distribution |
 
-Enable the **MongoDB Cursor plugin** in your IDE to inspect indexes and collections via MCP.
+The bundled `docs-langchain` MCP is enabled automatically in generated apps. Optionally install the **MongoDB Cursor plugin** from the marketplace to inspect Atlas indexes and collections via MCP.
+
+## Developing the scaffold
+
+This repo is not a generated app. Its tests live in `tests/` (bootstrap, hooks, smoke), not `tests/unit/`.
+
+```bash
+pip install -e ".[dev]"
+pytest -v                              # scaffold tests (38)
+SKIP_SMOKE_TESTS=1 pytest -v           # skip slow generated-app smoke test
+```
+
+`pytest tests/unit` is for **generated apps** only (copied from `template/tests/unit/`). Run that command inside your bootstrapped app directory (e.g. `demo-docs-rag/`), not here.
 
 ## Scaffold layout
 
 ```
-langchain-rag/
+langchain-rag-scaffold/
 ├── scripts/create_app.py    # bootstrap script
 ├── template/                # copied into new apps
 ├── docs/                    # scaffold-level docs
@@ -70,7 +85,7 @@ langchain-rag/
 ## Conventions
 
 - LCEL only: `prompt | llm | StrOutputParser()`
-- No `langchain_classic`, `LLMChain`, or `.run()`
+- No `langchain_classic`, `LLMChain`, `.run()`, or `initialize_agent()`
 - Manual client-side embeddings with `voyage-4-lite` (1024 dimensions, works on standard Atlas clusters)
 
 ## Python version note

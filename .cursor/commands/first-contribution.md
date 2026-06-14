@@ -1,38 +1,83 @@
-# First Contribution
+# First contribution: add a PDF loader
 
-Step-by-step TDD walkthrough: add PDF support to the document loader in **{{app_name}}**.
+Walk a new engineer through one concrete change using TDD.
 
-## Goal
+**Run this inside a generated app** (e.g. `demo-docs-rag/`), not the `langchain-rag-scaffold` root. To change the template itself, edit files under `template/` and run `pytest -v` from the scaffold root.
 
-Extend `src/{{package_name}}/ingestion/loader.py` so `ingest` can load `.pdf` files alongside `.txt` and `.md`.
-
-## Steps
-
-1. Read `AGENTS.md`, `.cursor/rules/rag-project-structure.mdc`, and `.cursor/rules/langchain-conventions.mdc`.
-
-2. **Red** — Add a failing test in `tests/unit/test_ingestion.py`:
-   - Create a minimal PDF in a temp directory (or use a small fixture file).
-   - Call `load_documents` on the PDF path.
-   - Assert one `Document` is returned with non-empty `page_content` and `metadata["source"]` set to the resolved path.
-
-3. **Green** — Implement in `ingestion/loader.py`:
-   - Add `.pdf` to `SUPPORTED_EXTENSIONS`.
-   - Implement `{{package_name}}.ingestion.loader._load_pdf(path: Path) -> Document`.
-   - Route PDF files through `_load_pdf` from `load_documents` (keep `_load_file` for text formats).
-   - Query the `docs-langchain` MCP server (see `.cursor/mcp.json`) for the current recommended PDF parsing approach.
-   - Use only approved dependencies from `pyproject.toml`; request approval before adding new ones.
-
-4. **Refactor** — Keep loader helpers small; do not add ingestion logic to `cli.py`.
-
-5. Verify:
+## Prerequisites
 
 ```bash
-pytest tests/unit/test_ingestion.py -v
+pip install -e ".[dev]"
+pytest tests/unit -v    # baseline should be green (generated app only)
+```
+
+## Step 1 — Write a failing test
+
+Edit `tests/unit/test_ingestion.py`. Add a test that expects PDF loading:
+
+```python
+def test_load_documents_supports_pdf(tmp_path, mocker):
+    pdf = tmp_path / "policy.pdf"
+    pdf.write_bytes(b"%PDF-1.4 fake content for test")
+
+    mocker.patch(
+        "{{package_name}}.ingestion.loader._load_pdf",
+        return_value=Document(page_content="policy text", metadata={"source": str(pdf)}),
+    )
+
+    docs = load_documents(pdf)
+    assert len(docs) == 1
+    assert docs[0].page_content == "policy text"
+```
+
+Run `pytest tests/unit/test_ingestion.py::test_load_documents_supports_pdf -v` — it should **fail** (function or PDF support missing).
+
+## Step 2 — Implement the loader
+
+If using an unfamiliar LangChain API, confirm its current signature via the `docs-langchain` MCP server before implementing.
+
+Edit `src/<package>/ingestion/loader.py`:
+
+1. Add `".pdf"` to `SUPPORTED_EXTENSIONS`
+2. Add a `_load_pdf(path: Path) -> Document` helper (use a PDF library only if the team approves a new dependency; for the tutorial, a stub or minimal text extraction is fine)
+3. Branch in `_load_file` or `load_documents` to call `_load_pdf` for `.pdf` files
+
+Keep embedding and DB logic out of this module — loader returns `list[Document]` only.
+
+## Step 3 — Green tests
+
+```bash
+pytest tests/unit -v
+```
+
+All unit tests should pass.
+
+## Step 4 — Convention check
+
+```bash
 python scripts/check_conventions.py
 ```
 
-## Conventions
+Must exit 0. Do not use `langchain_classic`, `LLMChain`, `.run()`, `initialize_agent()`, or broken `langchain.*` imports.
 
-- Return `list[Document]` with `metadata["source"]` on every chunk.
-- LCEL and `.invoke()` only — no `langchain_classic`, `LLMChain`, or `.run()`.
-- LangChain API questions: use the `docs-langchain` MCP server, not web search.
+## Step 5 — Optional integration check
+
+If PDF ingestion hits Atlas:
+
+```bash
+pytest -m integration -v
+```
+
+## Checklist
+
+- [ ] Failing unit test written first
+- [ ] Implementation in `ingestion/loader.py` only
+- [ ] `pytest tests/unit` passes
+- [ ] `python scripts/check_conventions.py` passes
+- [ ] No new dependencies unless added to allowlist test with team approval
+
+## References
+
+- `.cursor/skills/build-rag-app/SKILL.md` — extension workflows
+- `.cursor/rules/langchain-conventions.mdc` — banned APIs
+- `.cursor/rules/rag-project-structure.mdc` — module boundaries

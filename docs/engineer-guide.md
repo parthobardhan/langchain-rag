@@ -1,6 +1,6 @@
 # Engineer Guide: Building a RAG App
 
-This guide is for engineers using the **langchain-rag** scaffold. You do not need to read the entire scaffold repository — follow the steps below.
+This guide is for engineers using the **langchain-rag-scaffold**. You do not need to read the entire scaffold repository — follow the steps below.
 
 ## Prerequisites
 
@@ -13,11 +13,13 @@ This guide is for engineers using the **langchain-rag** scaffold. You do not nee
 ## Step 1: Generate your app
 
 ```bash
-git clone <org>/langchain-rag
-cd langchain-rag
+git clone <org>/langchain-rag-scaffold
+cd langchain-rag-scaffold
 python scripts/create_app.py acme-docs-rag --package acme_docs_rag
 cd ../acme-docs-rag
 ```
+
+**Cursor tip:** Open the generated app directory as its own workspace root (File → Open Folder). This keeps agent context limited to this app and approved docs.
 
 The directory name may use hyphens; the Python package and `pyproject.toml` project name use underscores. Omit `--package` to derive it from the app name.
 
@@ -95,6 +97,6 @@ Cursor rules in `.cursor/rules/` enforce:
 
 - LCEL chains: `prompt | llm | StrOutputParser()`
 - `RunnableWithMessageHistory` for chat memory (if you add it later)
-- No `langchain_classic`, `LLMChain`, or `.run()`
+- No `langchain_classic`, `LLMChain`, `.run()`, or `initialize_agent()`
 
 Use `/build-rag-app` in Cursor when you need agent help extending the app.
