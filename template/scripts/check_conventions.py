@@ -13,6 +13,10 @@ from pathlib import Path
 DEFAULT_SCAN_DIRS = ("src", "tests")
 
 CHAIN_RUN_MESSAGE = "deprecated API: .run() (use chain.invoke() with LCEL)"
+INITIALIZE_AGENT_MESSAGE = (
+    "deprecated API: initialize_agent() (use LCEL agent patterns)"
+)
+ALLOWED_RUN_MODULES = frozenset({"asyncio", "subprocess"})
 
 
 @dataclass(frozen=True)
@@ -67,8 +71,8 @@ BANNED_APIS: tuple[BannedAPI, ...] = (
         bugbot_item="No `.run()` on chains — use `.invoke()` with LCEL",
     ),
     BannedAPI(
-        patterns=(re.compile(r"\binitialize_agent\s*\("),),
-        message="deprecated API: initialize_agent() (use LCEL agent patterns)",
+        patterns=(),
+        message=INITIALIZE_AGENT_MESSAGE,
         category="deprecated",
         rule_bullets=("`initialize_agent(...)` — deprecated",),
         bugbot_item="No `initialize_agent(...)`",
@@ -90,6 +94,19 @@ def _is_python_source(path: Path) -> bool:
     return path.suffix == ".py" and path.is_file()
 
 
+def _collect_module_aliases(tree: ast.AST) -> dict[str, str]:
+    """Map local names from `import` statements to their top-level module."""
+    aliases: dict[str, str] = {}
+    for node in ast.walk(tree):
+        if not isinstance(node, ast.Import):
+            continue
+        for alias in node.names:
+            local = alias.asname or alias.name.split(".")[0]
+            root = alias.name.split(".")[0]
+            aliases[local] = root
+    return aliases
+
+
 def _run_call_receiver_name(node: ast.AST) -> str | None:
     """Return the root name for obj.run() calls, e.g. chain, asyncio, subprocess."""
     if isinstance(node, ast.Name):
@@ -99,12 +116,16 @@ def _run_call_receiver_name(node: ast.AST) -> str | None:
     return None
 
 
-def _scan_chain_run_calls(source: str, path: Path) -> list[Violation]:
-    try:
-        tree = ast.parse(source)
-    except SyntaxError:
-        return []
+def _is_allowed_run_receiver(name: str | None, aliases: dict[str, str]) -> bool:
+    if name is None:
+        return False
+    module = aliases.get(name, name)
+    return module in ALLOWED_RUN_MODULES
 
+
+def _scan_chain_run_calls(
+    tree: ast.AST, path: Path, aliases: dict[str, str]
+) -> list[Violation]:
     violations: list[Violation] = []
     for node in ast.walk(tree):
         if not isinstance(node, ast.Call):
@@ -113,11 +134,37 @@ def _scan_chain_run_calls(source: str, path: Path) -> list[Violation]:
         if not isinstance(func, ast.Attribute) or func.attr != "run":
             continue
         receiver = _run_call_receiver_name(func.value)
-        if receiver in {"asyncio", "subprocess"}:
+        if _is_allowed_run_receiver(receiver, aliases):
             continue
         violations.append(
             Violation(path=path, line=func.lineno, message=CHAIN_RUN_MESSAGE)
         )
+    return violations
+
+
+def _scan_initialize_agent_calls(tree: ast.AST, path: Path) -> list[Violation]:
+    violations: list[Violation] = []
+    for node in ast.walk(tree):
+        if not isinstance(node, ast.Call):
+            continue
+        func = node.func
+        if isinstance(func, ast.Name) and func.id == "initialize_agent":
+            violations.append(
+                Violation(path=path, line=func.lineno, message=INITIALIZE_AGENT_MESSAGE)
+            )
+    return violations
+
+
+def _scan_ast_violations(source: str, path: Path) -> list[Violation]:
+    try:
+        tree = ast.parse(source)
+    except SyntaxError:
+        return []
+
+    aliases = _collect_module_aliases(tree)
+    violations: list[Violation] = []
+    violations.extend(_scan_chain_run_calls(tree, path, aliases))
+    violations.extend(_scan_initialize_agent_calls(tree, path))
     return violations
 
 
@@ -128,7 +175,7 @@ def scan_text(text: str, path: Path) -> list[Violation]:
             for match in pattern.finditer(text):
                 line = text.count("\n", 0, match.start()) + 1
                 violations.append(Violation(path=path, line=line, message=api.message))
-    violations.extend(_scan_chain_run_calls(text, path))
+    violations.extend(_scan_ast_violations(text, path))
     return violations
 
 
