@@ -58,3 +58,14 @@ def test_bootstrap_derives_package_name_from_app_name(tmp_path: Path):
 
     pyproject = (dest / "pyproject.toml").read_text(encoding="utf-8")
     assert 'name = "my_cool_rag"' in pyproject
+
+
+def test_bootstrap_copies_hidden_template_files(tmp_path: Path):
+    dest = create_app("acme-docs-rag", "acme_docs_rag", tmp_path, copy_cursor=False)
+
+    assert (dest / ".gitignore").is_file()
+    assert (dest / ".cursorignore").is_file()
+    assert (dest / ".env.example").is_file()
+    assert (dest / ".github" / "workflows" / "ci.yml").is_file()
+    ci = (dest / ".github" / "workflows" / "ci.yml").read_text(encoding="utf-8")
+    assert "check_conventions.py" in ci
