@@ -53,6 +53,7 @@ python -m acme_docs_rag.cli query "How many remote days are allowed?"
 | Rules | `.cursor/rules/` | LangChain conventions + project layout |
 | Skill | `.cursor/skills/build-rag-app/` | Agent workflow for extending apps |
 | Command | `.cursor/commands/new-rag-app.md` | Bootstrap a new app |
+| Command | `.cursor/commands/add-source.md` | Add a new source modality (text, PDF, image, audio) — routes the right Voyage model, chunking, and index impact |
 | Plugin | `.cursor-plugin/plugin.json` | Optional org marketplace distribution |
 
 Enable the **MongoDB Cursor plugin** in your IDE to inspect indexes and collections via MCP.
