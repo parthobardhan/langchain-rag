@@ -12,6 +12,9 @@ from pathlib import Path
 DEFAULT_SCAN_DIRS = ("src", "tests")
 
 CHAIN_RUN_MESSAGE = "deprecated API: .run() (use chain.invoke() with LCEL)"
+INITIALIZE_AGENT_MESSAGE = (
+    "deprecated API: initialize_agent() (use LCEL agent patterns)"
+)
 
 
 @dataclass(frozen=True)
@@ -57,7 +60,7 @@ BANNED_APIS: tuple[BannedAPI, ...] = (
         bugbot_item="No `.run()` on chains — use `.invoke()` with LCEL",
     ),
     BannedAPI(
-        message="deprecated API: initialize_agent() (use LCEL agent patterns)",
+        message=INITIALIZE_AGENT_MESSAGE,
         category="deprecated",
         rule_bullets=("`initialize_agent(...)` — deprecated",),
         bugbot_item="No `initialize_agent(...)`",
@@ -70,7 +73,6 @@ BANNED_IMPORT_FROM_MODULES: dict[str, str] = {
     "langchain.memory": BANNED_APIS[2].message,
 }
 LANGCHAIN_CLASSIC_MESSAGE = BANNED_APIS[3].message
-INITIALIZE_AGENT_MESSAGE = BANNED_APIS[5].message
 
 
 @dataclass(frozen=True)
@@ -170,11 +172,7 @@ def _scan_initialize_agent_calls(tree: ast.AST, path: Path) -> list[Violation]:
         func = node.func
         if isinstance(func, ast.Name) and func.id == "initialize_agent":
             violations.append(
-                Violation(
-                    path=path,
-                    line=func.lineno,
-                    message=INITIALIZE_AGENT_MESSAGE,
-                )
+                Violation(path=path, line=func.lineno, message=INITIALIZE_AGENT_MESSAGE)
             )
     return violations
 
