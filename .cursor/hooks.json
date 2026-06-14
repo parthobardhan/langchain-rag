@@ -3,7 +3,7 @@
   "hooks": {
     "afterFileEdit": [
       {
-        "command": "python3 .cursor/hooks/check_conventions_hook.py"
+        "command": "python .cursor/hooks/check_conventions_hook.py"
       }
     ]
   }
