@@ -16,6 +16,9 @@ dev = [
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+markers = [
+    "smoke: bootstraps a generated app and runs install/unit-test checks (slow)",
+]
 
 [tool.ruff]
 line-length = 100
