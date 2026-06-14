@@ -132,6 +132,58 @@ def test_hook_reports_violations_on_bad_edit(tmp_path: Path):
     assert "langchain_classic" in output["additional_context"]
 
 
+def test_hook_reports_violations_when_cwd_is_not_project_root(tmp_path: Path):
+    app_root, target = _bootstrap_fake_app(tmp_path, bad=True)
+    payload = json.dumps(
+        {
+            "file_path": str(target),
+            "workspace_roots": [str(app_root)],
+        }
+    )
+    result = subprocess.run(
+        [sys.executable, str(HOOK_PATH)],
+        input=payload,
+        cwd=tmp_path,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+
+    assert result.returncode == 0
+    assert result.stdout.strip()
+    output = json.loads(result.stdout)
+    assert "additional_context" in output
+    assert "langchain_classic" in output["additional_context"]
+
+
+def test_resolve_project_root_uses_workspace_roots(hook, tmp_path: Path):
+    app_root = tmp_path / "fake-rag-app"
+    app_root.mkdir()
+    (app_root / "pyproject.toml").write_text('[project]\nname = "fake"\n', encoding="utf-8")
+    (app_root / "scripts").mkdir()
+    shutil.copy2(CHECKER_SRC, app_root / "scripts" / "check_conventions.py")
+
+    payload = {
+        "file_path": str(app_root / "src" / "app" / "module.py"),
+        "workspace_roots": [str(app_root)],
+    }
+    assert hook.resolve_project_root(payload) == app_root.resolve()
+
+
+def test_resolve_project_root_uses_edited_file_path(hook, tmp_path: Path):
+    app_root = tmp_path / "fake-rag-app"
+    app_root.mkdir()
+    (app_root / "pyproject.toml").write_text('[project]\nname = "fake"\n', encoding="utf-8")
+    (app_root / "scripts").mkdir()
+    shutil.copy2(CHECKER_SRC, app_root / "scripts" / "check_conventions.py")
+    target = app_root / "src" / "app" / "module.py"
+    target.parent.mkdir(parents=True)
+    target.write_text("print('ok')\n", encoding="utf-8")
+
+    payload = {"file_path": str(target)}
+    assert hook.resolve_project_root(payload) == app_root.resolve()
+
+
 def test_hook_silent_on_clean_edit(tmp_path: Path):
     app_root, target = _bootstrap_fake_app(tmp_path, bad=False)
     result = _run_hook(app_root, target)

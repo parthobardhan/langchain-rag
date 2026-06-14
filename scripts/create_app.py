@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import argparse
+import os
 import re
 import shutil
 import sys
@@ -76,10 +77,27 @@ def replace_placeholders(content: str, package_name: str, app_name: str) -> str:
     )
 
 
-def copy_tree(src: Path, dst: Path, package_name: str, app_name: str) -> None:
-    for item in src.rglob("*"):
-        if any(part in SKIP_COPY for part in item.parts):
+def _should_skip_copy_path(path: Path) -> bool:
+    return any(part in SKIP_COPY for part in path.parts)
+
+
+def iter_copy_paths(src: Path) -> list[Path]:
+    """Walk src, including hidden files and directories (names starting with '.')."""
+    paths: list[Path] = []
+    for dirpath, dirnames, filenames in os.walk(src, topdown=True):
+        root = Path(dirpath)
+        dirnames[:] = sorted(name for name in dirnames if name not in SKIP_COPY)
+        if _should_skip_copy_path(root):
             continue
+        for name in (*dirnames, *filenames):
+            path = root / name
+            if not _should_skip_copy_path(path):
+                paths.append(path)
+    return paths
+
+
+def copy_tree(src: Path, dst: Path, package_name: str, app_name: str) -> None:
+    for item in iter_copy_paths(src):
         rel = item.relative_to(src)
         rel_str = str(rel).replace("{{package_name}}", package_name)
         target = dst / rel_str
@@ -129,7 +147,7 @@ def copy_cursor_guidance(dst: Path, package_name: str, app_name: str) -> None:
         if dest_dir.exists():
             shutil.rmtree(dest_dir)
         shutil.copytree(src_dir, dest_dir)
-        for path in dest_dir.rglob("*"):
+        for path in iter_copy_paths(dest_dir):
             if not path.is_file():
                 continue
             try:

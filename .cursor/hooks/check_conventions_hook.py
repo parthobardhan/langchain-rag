@@ -9,12 +9,67 @@ import sys
 from pathlib import Path
 
 
-def find_project_root() -> Path:
+def find_project_root_from_cwd() -> Path:
     cwd = Path.cwd().resolve()
     for directory in (cwd, *cwd.parents):
         if (directory / "pyproject.toml").exists():
             return directory
     return cwd
+
+
+def _project_roots_from_path_hint(hint: Path) -> list[Path]:
+    try:
+        start = hint.resolve()
+    except OSError:
+        return []
+    if start.is_file():
+        start = start.parent
+    roots: list[Path] = []
+    for directory in (start, *start.parents):
+        if (directory / "pyproject.toml").exists():
+            roots.append(directory)
+    return roots
+
+
+def _dedupe_paths(paths: list[Path]) -> list[Path]:
+    seen: set[Path] = set()
+    unique: list[Path] = []
+    for path in paths:
+        try:
+            resolved = path.resolve()
+        except OSError:
+            continue
+        if resolved in seen:
+            continue
+        seen.add(resolved)
+        unique.append(resolved)
+    return unique
+
+
+def project_root_candidates(payload: dict) -> list[Path]:
+    candidates: list[Path] = []
+
+    workspace_roots = payload.get("workspace_roots")
+    if isinstance(workspace_roots, list):
+        for value in workspace_roots:
+            if isinstance(value, str) and value:
+                candidates.append(Path(value))
+
+    for raw_path in edited_paths(payload):
+        candidates.extend(_project_roots_from_path_hint(raw_path))
+
+    candidates.append(find_project_root_from_cwd())
+    return _dedupe_paths(candidates)
+
+
+def resolve_project_root(payload: dict) -> Path | None:
+    for candidate in project_root_candidates(payload):
+        if resolve_checker_script(candidate) is not None:
+            return candidate
+    for candidate in project_root_candidates(payload):
+        if (candidate / "pyproject.toml").exists():
+            return candidate
+    return None
 
 
 def resolve_checker_script(project_root: Path) -> Path | None:
@@ -88,7 +143,10 @@ def main() -> int:
     except json.JSONDecodeError:
         return 0
 
-    project_root = find_project_root()
+    project_root = resolve_project_root(payload)
+    if project_root is None:
+        return 0
+
     checker = resolve_checker_script(project_root)
     if checker is None:
         return 0
